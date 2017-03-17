@@ -5,10 +5,8 @@ const gyp = require('gyp.js');
 
 try {
   const code = gyp.main(bindings.argv.slice(1));
-  if (code !== null) {
-    bindings.error('Failed with code: ' + code);
-    bindings.exit(-1);
-  }
+  if (code !== null)
+    bindings.exit(code);
 } catch (e) {
   bindings.error(e.stack);
   bindings.exit(-1);
