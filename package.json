@@ -1,0 +1,35 @@
+{
+  "name": "dukgyp",
+  "version": "1.0.0",
+  "description": "gyp.js on duktape",
+  "main": "src/dukgyp.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build-js": "webpack --progress --colors",
+    "build": "npm run build-js && gypkg build dukgyp.gyp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/indutny/dukgyp.js.git"
+  },
+  "keywords": [
+    "duktape",
+    "gyp"
+  ],
+  "author": "Fedor Indutny <fedor@indutny.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/indutny/dukgyp.js/issues"
+  },
+  "homepage": "https://github.com/indutny/dukgyp.js#readme",
+  "dependencies": {
+    "babel-core": "^6.24.0",
+    "babel-loader": "^6.4.1",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-env": "^1.2.2",
+    "babel-preset-es2015": "^6.24.0",
+    "gyp.js": "^1.5.1",
+    "gypkg": "^2.7.7",
+    "webpack": "^2.2.1"
+  }
+}
