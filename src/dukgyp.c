@@ -84,6 +84,17 @@ static int dukgyp_close_fd(int fd) {
 }
 
 
+static int dukgyp_mkdir(const char* path) {
+  int err;
+
+  do
+    err = mkdir(path, 0755);
+  while (err == -1 && errno == EINTR);
+
+  return err;
+}
+
+
 static char* dukgyp_exec_cmd(duk_context* ctx, const char* cmd,
                              dukgyp_exec_opt_t* options,
                              size_t* out_len) {
@@ -304,11 +315,32 @@ static duk_ret_t dukgyp_native_fs_write_file(duk_context* ctx) {
 
 
 static duk_ret_t dukgyp_native_fs_mkdirp(duk_context* ctx) {
-  const char* arg;
+  char* arg;
+  char* p;
+  int err;
 
-  arg = duk_to_string(ctx, 0);
+  arg = strdup(duk_to_string(ctx, 0));
+  if (arg == NULL)
+    duk_fatal(ctx, "strdup() no memory");
 
-  fprintf(stderr, "mkdir: %s\n", arg);
+  for (p = arg; *p != '\0'; p++) {
+    if (*p != '/')
+      continue;
+
+    if (p == arg)
+      continue;
+
+    *p = '\0';
+    err = dukgyp_mkdir(arg);
+    if (err != 0 && errno != EEXIST)
+      duk_fatal(ctx, "mkdir() failure");
+    *p = '/';
+  }
+
+  err = dukgyp_mkdir(arg);
+  if (err != 0 && errno != EEXIST)
+    duk_fatal(ctx, "mkdir() failure");
+  free(arg);
 
   return 0;
 }
@@ -346,6 +378,7 @@ static duk_ret_t dukgyp_native_cp_exec(duk_context* ctx) {
   size_t len;
 
   cmd = duk_to_string(ctx, 0);
+  memset(&opts, sizeof(opts), 0);
   if (duk_is_object(ctx, 1)) {
     const char* stdio;
 
@@ -358,9 +391,6 @@ static duk_ret_t dukgyp_native_cp_exec(duk_context* ctx) {
     duk_pop(ctx);
 
     opts.inherit_stdio = strcmp(stdio, "inherit") == 0;
-  } else {
-    opts.cwd = NULL;
-    opts.inherit_stdio = 0;
   }
 
   out = dukgyp_exec_cmd(ctx, cmd, &opts, &len);
