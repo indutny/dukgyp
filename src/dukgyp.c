@@ -305,10 +305,33 @@ static duk_ret_t dukgyp_native_fs_read_file(duk_context* ctx) {
 
 static duk_ret_t dukgyp_native_fs_write_file(duk_context* ctx) {
   const char* arg;
+  const char* content;
+  size_t len;
+  int fd;
 
   arg = duk_to_string(ctx, 0);
+  content = duk_to_string(ctx, 1);
 
-  fprintf(stderr, "write: %s\n", arg);
+  do
+    fd = open(arg, O_WRONLY | O_CREAT | O_TRUNC);
+  while (fd == -1 && errno == EINTR);
+
+  len = strlen(content);
+  while (len != 0) {
+    int err;
+
+    do
+      err = write(fd, content, len);
+    while (err == -1 && errno == EINTR);
+
+    if (err == -1)
+      duk_fatal(ctx, "write() failed");
+
+    content += err;
+    len -= err;
+  }
+
+  dukgyp_close_fd(fd);
 
   return 0;
 }
