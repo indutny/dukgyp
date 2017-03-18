@@ -8,7 +8,7 @@ try {
   if (code !== null)
     bindings.exit(code);
 } catch (e) {
-  bindings.error(e.stack);
+  bindings.error(e.stack + '\n');
   bindings.exit(-1);
 }
 bindings.exit(0);

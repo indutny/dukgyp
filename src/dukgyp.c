@@ -1,8 +1,10 @@
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -12,8 +14,15 @@
 
 #include "src/dukgyp-js.h"
 
-
 static size_t kDukgypReadBlock = 65536;
+
+
+typedef struct dukgyp_exec_opt_s dukgyp_exec_opt_t;
+
+struct dukgyp_exec_opt_s {
+  const char* cwd;
+  int inherit_stdio;
+};
 
 
 static char* dukgyp_read_fd(int fd, size_t suggested_size, size_t* out_size) {
@@ -75,6 +84,77 @@ static int dukgyp_close_fd(int fd) {
 }
 
 
+static char* dukgyp_exec_cmd(duk_context* ctx, const char* cmd,
+                             dukgyp_exec_opt_t* options,
+                             size_t* out_len) {
+  int err;
+  pid_t pid;
+  int pair[2];
+  char* buf;
+
+  /* TODO(indutny): CLOEXEC */
+  if (!options->inherit_stdio) {
+    err = socketpair(AF_UNIX, SOCK_STREAM, 0, pair);
+    if (err != 0)
+      duk_fatal(ctx, "socketpair() failure");
+  }
+
+  pid = fork();
+  if (pid == -1)
+    duk_fatal(ctx, "fork() failure");
+
+  /* Child process */
+  if (pid == 0) {
+    const char* argv[] = { "/bin/sh", "-c", cmd, NULL };
+
+    /* Replace stdout */
+    if (!options->inherit_stdio) {
+      int fd;
+
+      /* Black hole stdin/stderr */
+      do
+        fd = open("/dev/null", O_RDWR);
+      while (fd == -1 && errno == EINTR);
+
+      do
+        err = dup2(fd, 0);
+      while (err == -1 && errno == EINTR);
+      do
+        err = dup2(fd, 2);
+      while (err == -1 && errno == EINTR);
+
+      /* Pipe instead of stdout */
+      do
+        err = dup2(pair[1], 1);
+      while (err == -1 && errno == EINTR);
+
+      dukgyp_close_fd(pair[1]);
+      dukgyp_close_fd(fd);
+    }
+
+    if (err == -1)
+      abort();
+
+    err = execvp(argv[0], (char**) argv);
+    if (err != 0)
+      abort();
+
+    /* Not reachable */
+    abort();
+    return NULL;
+  }
+
+  if (options->inherit_stdio)
+    return NULL;
+
+  dukgyp_close_fd(pair[1]);
+  buf = dukgyp_read_fd(pair[0], 0, out_len);
+  dukgyp_close_fd(pair[0]);
+
+  return buf;
+}
+
+
 static void dukgyp_fatal_handler(void* udata, const char* msg) {
   fprintf(stderr, "Fatal dukgyp error: %s\n", msg);
   exit(-1);
@@ -82,13 +162,13 @@ static void dukgyp_fatal_handler(void* udata, const char* msg) {
 
 
 static duk_ret_t dukgyp_native_log(duk_context* ctx) {
-  fprintf(stdout, "%s\n", duk_to_string(ctx, 0));
+  fprintf(stdout, "%s", duk_to_string(ctx, 0));
   return 0;
 }
 
 
 static duk_ret_t dukgyp_native_error(duk_context* ctx) {
-  fprintf(stderr, "%s\n", duk_to_string(ctx, 0));
+  fprintf(stderr, "%s", duk_to_string(ctx, 0));
   return 0;
 }
 
@@ -259,8 +339,50 @@ static void dukgyp_bindings_fs(duk_context* ctx) {
 }
 
 
+static duk_ret_t dukgyp_native_cp_exec(duk_context* ctx) {
+  const char* cmd;
+  dukgyp_exec_opt_t opts;
+  char* out;
+  size_t len;
+
+  cmd = duk_to_string(ctx, 0);
+  if (duk_is_object(ctx, 1)) {
+    const char* stdio;
+
+    duk_get_prop_string(ctx, 1, "cwd");
+    opts.cwd = duk_to_string(ctx, -1);
+    duk_pop(ctx);
+
+    duk_get_prop_string(ctx, 1, "stdio");
+    stdio = duk_to_string(ctx, -1);
+    duk_pop(ctx);
+
+    opts.inherit_stdio = strcmp(stdio, "inherit") == 0;
+  } else {
+    opts.cwd = NULL;
+    opts.inherit_stdio = 0;
+  }
+
+  out = dukgyp_exec_cmd(ctx, cmd, &opts, &len);
+  if (out == NULL) {
+    if (!opts.inherit_stdio)
+      duk_fatal(ctx, "dukgyp_exec_cmd() failure");
+
+    duk_push_null(ctx);
+    return 1;
+  }
+
+  duk_push_string(ctx, out);
+  free(out);
+  return 1;
+}
+
+
 static void dukgyp_bindings_child_process(duk_context* ctx) {
   duk_push_object(ctx);
+
+  duk_push_c_function(ctx, dukgyp_native_cp_exec, 2);
+  duk_put_prop_string(ctx, -2, "execSync");
 
   duk_put_prop_string(ctx, -2, "childProcess");
 }
@@ -292,6 +414,8 @@ static void dukgyp_bindings_argv(duk_context* ctx, int argc, char** argv) {
 
 int main(int argc, char** argv) {
   duk_context* ctx;
+
+  signal(SIGPIPE, SIG_IGN);
 
   ctx = duk_create_heap(NULL, NULL, NULL, NULL, dukgyp_fatal_handler);
   if (ctx == NULL)
