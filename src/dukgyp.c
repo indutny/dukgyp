@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -10,6 +11,68 @@
 #include "duktape.h"
 
 #include "src/dukgyp-js.h"
+
+
+static size_t kDukgypReadBlock = 65536;
+
+
+static char* dukgyp_read_fd(int fd, size_t suggested_size, size_t* out_size) {
+  char* res;
+  size_t off;
+  size_t size;
+  int err;
+
+  off = 0;
+  size = suggested_size;
+  if (size == 0)
+    size = kDukgypReadBlock;
+  res = malloc(size);
+  if (res == NULL)
+    return NULL;
+
+  for (;;) {
+    do
+      err = read(fd, res + off, size - off);
+    while (err == -1 && errno == EINTR);
+
+    if (err < 0)
+      goto fail_read;
+
+    off += err;
+    if (off == size) {
+      char* tmp;
+
+      size += kDukgypReadBlock;
+      tmp = realloc(res, size);
+      if (tmp == NULL)
+        goto fail_read;
+
+      res = tmp;
+    }
+
+    /* EOF */
+    if (err == 0)
+      break;
+  }
+
+  *out_size = off;
+  return res;
+
+fail_read:
+  free(res);
+  return NULL;
+}
+
+
+static int dukgyp_close_fd(int fd) {
+  int err;
+
+  do
+    err = close(fd);
+  while (err == -1 && errno == EINTR);
+
+  return err;
+}
 
 
 static void dukgyp_fatal_handler(void* udata, const char* msg) {
@@ -109,6 +172,8 @@ static duk_ret_t dukgyp_native_fs_read_file(duk_context* ctx) {
   int err;
   const char* arg;
   char* buf;
+  char* storage;
+  size_t len;
 
   arg = duk_to_string(ctx, 0);
 
@@ -116,8 +181,10 @@ static duk_ret_t dukgyp_native_fs_read_file(duk_context* ctx) {
     fd = open(arg, O_RDONLY);
   while (fd == -1 && errno == EINTR);
 
-  if (fd == -1)
+  if (fd == -1 && errno == ENOENT)
     duk_fatal(ctx, "fs.readFile() error: no file");
+  else if (fd == -1)
+    duk_fatal(ctx, "fs.readFile() error: other failure");
 
   do
     err = fstat(fd, &st);
@@ -126,18 +193,21 @@ static duk_ret_t dukgyp_native_fs_read_file(duk_context* ctx) {
   if (err != 0)
     duk_fatal(ctx, "fs.readFile() error: fstat error");
 
-  /* TODO(indutny): file can change its size between these calls */
-  buf = duk_push_fixed_buffer(ctx, st.st_size);
+  buf = dukgyp_read_fd(fd, st.st_size + 1, &len);
 
-  /* TODO(indutny): read it */
-  err = read(fd, buf, st.st_size);
-  if (err < 0)
+  dukgyp_close_fd(fd);
+
+  if (buf == NULL)
     duk_fatal(ctx, "fs.readFile() error: can't read");
 
-  duk_push_buffer_object(ctx, -1, 0, err, DUK_BUFOBJ_NODEJS_BUFFER);
+  /* TODO(indutny): avoid copying */
+  storage = duk_push_fixed_buffer(ctx, len);
+  memcpy(storage, buf, len);
+  free(buf);
+
+  duk_push_buffer_object(ctx, -1, 0, len, DUK_BUFOBJ_NODEJS_BUFFER);
   duk_remove(ctx, -2);
 
-  close(fd);
   return 1;
 }
 
