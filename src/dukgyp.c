@@ -25,10 +25,8 @@ struct dukgyp_exec_opt_s {
 };
 
 
-static void dukgyp_fatal_errno(duk_context* ctx, const char* msg) {
-  static char st[65536];
-  snprintf(st, sizeof(st), "%s, errno=%d", msg, errno);
-  duk_fatal(ctx, st);
+static void dukgyp_syscall_throw(duk_context* ctx, const char* msg) {
+  duk_generic_error(ctx, "%s, errno=%d", msg, errno);
 }
 
 
@@ -114,12 +112,12 @@ static char* dukgyp_exec_cmd(duk_context* ctx, const char* cmd,
   if (!options->inherit_stdio) {
     err = socketpair(AF_UNIX, SOCK_STREAM, 0, pair);
     if (err != 0)
-      dukgyp_fatal_errno(ctx, "socketpair() failure");
+      dukgyp_syscall_throw(ctx, "socketpair() failure");
   }
 
   pid = fork();
   if (pid == -1)
-    dukgyp_fatal_errno(ctx, "fork() failure");
+    dukgyp_syscall_throw(ctx, "fork() failure");
 
   /* Child process */
   if (pid == 0) {
@@ -212,7 +210,7 @@ static duk_ret_t dukgyp_native_cwd(duk_context* ctx) {
 
   cwd = getwd(NULL);
   if (cwd == NULL)
-    dukgyp_fatal_errno(ctx, "cwd() failure");
+    dukgyp_syscall_throw(ctx, "cwd() failure");
   duk_push_string(ctx, cwd);
   free(cwd);
   return 1;
@@ -267,7 +265,7 @@ static duk_ret_t dukgyp_native_fs_exists(duk_context* ctx) {
   while (err == -1 && errno == EINTR);
 
   if (err == -1 && errno != ENOENT)
-    dukgyp_fatal_errno(ctx, "fs.exists failure");
+    dukgyp_syscall_throw(ctx, "fs.exists failure");
 
   duk_push_boolean(ctx, err == 0);
   return 1;
@@ -290,23 +288,23 @@ static duk_ret_t dukgyp_native_fs_read_file(duk_context* ctx) {
   while (fd == -1 && errno == EINTR);
 
   if (fd == -1 && errno == ENOENT)
-    duk_fatal(ctx, "fs.readFile() error: no file");
+    duk_generic_error(ctx, "fs.readFile() error: no file");
   else if (fd == -1)
-    dukgyp_fatal_errno(ctx, "fs.readFile() error: other failure");
+    dukgyp_syscall_throw(ctx, "fs.readFile() error: other failure");
 
   do
     err = fstat(fd, &st);
   while (err == -1 && errno == EINTR);
 
   if (err != 0)
-    dukgyp_fatal_errno(ctx, "fs.readFile() error: fstat error");
+    dukgyp_syscall_throw(ctx, "fs.readFile() error: fstat error");
 
   buf = dukgyp_read_fd(fd, st.st_size + 1, &len);
 
   dukgyp_close_fd(fd);
 
   if (buf == NULL)
-    duk_fatal(ctx, "fs.readFile() error: can't read");
+    duk_generic_error(ctx, "fs.readFile() error: can't read");
 
   /* TODO(indutny): avoid copying */
   storage = duk_push_fixed_buffer(ctx, len);
@@ -334,7 +332,7 @@ static duk_ret_t dukgyp_native_fs_write_file(duk_context* ctx) {
   while (fd == -1 && errno == EINTR);
 
   if (fd == -1)
-    dukgyp_fatal_errno(ctx, "open() failed");
+    dukgyp_syscall_throw(ctx, "open() failed");
 
   len = strlen(content);
   while (len != 0) {
@@ -345,7 +343,7 @@ static duk_ret_t dukgyp_native_fs_write_file(duk_context* ctx) {
     while (err == -1 && errno == EINTR);
 
     if (err == -1)
-      dukgyp_fatal_errno(ctx, "write() failed");
+      dukgyp_syscall_throw(ctx, "write() failed");
 
     content += err;
     len -= err;
@@ -364,7 +362,7 @@ static duk_ret_t dukgyp_native_fs_mkdirp(duk_context* ctx) {
 
   arg = strdup(duk_to_string(ctx, 0));
   if (arg == NULL)
-    duk_fatal(ctx, "strdup() no memory");
+    duk_generic_error(ctx, "strdup() no memory");
 
   for (p = arg; *p != '\0'; p++) {
     if (*p != '/')
@@ -376,13 +374,13 @@ static duk_ret_t dukgyp_native_fs_mkdirp(duk_context* ctx) {
     *p = '\0';
     err = dukgyp_mkdir(arg);
     if (err != 0 && errno != EEXIST)
-      dukgyp_fatal_errno(ctx, "mkdir() failure");
+      dukgyp_syscall_throw(ctx, "mkdir() failure");
     *p = '/';
   }
 
   err = dukgyp_mkdir(arg);
   if (err != 0 && errno != EEXIST)
-    dukgyp_fatal_errno(ctx, "mkdir() failure");
+    dukgyp_syscall_throw(ctx, "mkdir() failure");
   free(arg);
 
   return 0;
@@ -439,7 +437,7 @@ static duk_ret_t dukgyp_native_cp_exec(duk_context* ctx) {
   out = dukgyp_exec_cmd(ctx, cmd, &opts, &len);
   if (out == NULL) {
     if (!opts.inherit_stdio)
-      duk_fatal(ctx, "dukgyp_exec_cmd() failure");
+      duk_generic_error(ctx, "dukgyp_exec_cmd() failure");
 
     duk_push_null(ctx);
     return 1;
