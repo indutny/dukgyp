@@ -12,7 +12,11 @@
 
 #include "duktape.h"
 
-#include "src/dukgyp-js.h"
+#ifndef DUKGYP_TEST
+# include "src/dukgyp-js.h"
+#else  /* DUKGYP_TEST */
+# include "src/dukgyp-test-js.h"
+#endif  /* DUKGYP_TEST */
 
 static size_t kDukgypReadBlock = 65536;
 
@@ -183,6 +187,7 @@ static char* dukgyp_exec_cmd(duk_context* ctx, const char* cmd,
 
 static void dukgyp_fatal_handler(void* udata, const char* msg) {
   fprintf(stderr, "Fatal dukgyp error: %s\n", msg);
+  fflush(stderr);
   exit(-1);
 }
 

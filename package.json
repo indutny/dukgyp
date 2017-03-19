@@ -5,9 +5,8 @@
   "main": "src/dukgyp.js",
   "binding": false,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build-js": "webpack --progress --colors",
-    "build": "npm run build-js && gypkg build dukgyp.gyp",
+    "test": "npm run build && ./out/Release/dukgyp-test",
+    "build": "gypkg build dukgyp.gyp",
     "install": "npm run build"
   },
   "repository": {

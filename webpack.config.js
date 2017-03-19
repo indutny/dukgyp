@@ -25,4 +25,14 @@ module.exports = [{
   module: {
     loaders: loaders
   }
+}, {
+  target: 'web',
+  entry: path.join(SRC, 'test.js'),
+  output: {
+    path: LIB,
+    filename: 'test.js'
+  },
+  module: {
+    loaders: loaders
+  }
 }];
