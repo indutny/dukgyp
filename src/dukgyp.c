@@ -140,14 +140,21 @@ static char* dukgyp_exec_cmd(duk_context* ctx, const char* cmd,
       do
         err = dup2(fd, 0);
       while (err == -1 && errno == EINTR);
+      if (err == -1)
+        abort();
+
       do
         err = dup2(fd, 2);
       while (err == -1 && errno == EINTR);
+      if (err == -1)
+        abort();
 
       /* Pipe instead of stdout */
       do
         err = dup2(pair[1], 1);
       while (err == -1 && errno == EINTR);
+      if (err == -1)
+        abort();
 
       dukgyp_close_fd(pair[1]);
       dukgyp_close_fd(fd);
