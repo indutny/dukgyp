@@ -2,6 +2,8 @@
 
 **Work-in-progress**
 
+See [help-wanted issues][0].
+
 ## LICENSE
 
 This software is licensed under the MIT License.
@@ -51,3 +53,5 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+
+[0]: https://github.com/indutny/dukgyp/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22
