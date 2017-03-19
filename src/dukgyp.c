@@ -231,7 +231,7 @@ static void dukgyp_bindings_general(duk_context* ctx) {
 }
 
 
-/* NOTE: just a stub */
+/* NOTE: just a stub, we are not going to support it in v1 */
 static duk_ret_t dukgyp_native_fs_readdir(duk_context* ctx) {
   duk_push_array(ctx);
   return 1;
