@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include "duktape.h"
@@ -111,8 +112,7 @@ static char* dukgyp_exec_cmd(duk_context* ctx, const char* cmd,
   pid_t pid;
   int pair[2];
   char* buf;
-
-  /* TODO(indutny): throw on non-zero exit code */
+  int stat_loc;
 
   /* TODO(indutny): CLOEXEC */
   if (!options->inherit_stdio) {
@@ -176,12 +176,28 @@ static char* dukgyp_exec_cmd(duk_context* ctx, const char* cmd,
     return NULL;
   }
 
+  buf = NULL;
   if (options->inherit_stdio)
-    return NULL;
+    goto wait_pid;
 
   dukgyp_close_fd(pair[1]);
   buf = dukgyp_read_fd(pair[0], 0, out_len);
   dukgyp_close_fd(pair[0]);
+
+wait_pid:
+  do
+    err = waitpid(pid, &stat_loc, 0);
+  while (err == -1 && errno == EINTR);
+
+  if (err == -1) {
+    free(buf);
+    dukgyp_syscall_throw(ctx, "waitpid() failure");
+  }
+
+  if (WEXITSTATUS(stat_loc) != 0) {
+    free(buf);
+    duk_generic_error(ctx, "execSync(): non-zero exit code");
+  }
 
   return buf;
 }

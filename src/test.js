@@ -1,7 +1,7 @@
 'use strict';
 
 let tap = {
-  total: 14,
+  total: 15,
   current: 0,
   errors: 0
 };
@@ -105,6 +105,9 @@ const execSync = bindings.childProcess.execSync;
 
 assert.equal(execSync('echo hello').toString(), 'hello\n',
              'execSync() must return stdout');
+assert.throws(() => {
+  execSync('exit 1');
+}, 'execSync() must throw on non-zero exit code');
 
 //
 // TAP end
