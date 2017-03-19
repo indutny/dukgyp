@@ -1,7 +1,17 @@
 {
+  "variables": {
+    "dukgyp_platform%": "unknown",
+  },
   "target_defaults": {
     "include_dirs": [
       ".",
+    ],
+    "conditions": [
+      ["OS=='mac'", {
+        "variables": {
+          "dukgyp_platform": "darwin",
+        },
+      }],
     ],
   },
   "targets": [{
@@ -16,6 +26,10 @@
     "sources": [
       "deps/duktape/duktape.c",
       "src/dukgyp.c",
+    ],
+
+    "defines": [
+      "DUKGYP_PLATFORM=\"<(dukgyp_platform)\"",
     ],
 
     "actions": [{
@@ -34,5 +48,15 @@
         '<@(_outputs)',
       ],
     }],
+  }, {
+    "target_name": "copy_binary",
+    "type":"none",
+    "dependencies" : [ "dukgyp" ],
+    "copies": [
+      {
+        "destination": "./bin/",
+        "files": ["./out/Release/dukgyp"]
+      },
+    ],
   }],
 }

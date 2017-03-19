@@ -25,6 +25,13 @@ struct dukgyp_exec_opt_s {
 };
 
 
+static void dukgyp_fatal_errno(duk_context* ctx, const char* msg) {
+  static char st[65536];
+  snprintf(st, sizeof(st), "%s, errno=%d", msg, errno);
+  duk_fatal(ctx, st);
+}
+
+
 static char* dukgyp_read_fd(int fd, size_t suggested_size, size_t* out_size) {
   char* res;
   size_t off;
@@ -107,12 +114,12 @@ static char* dukgyp_exec_cmd(duk_context* ctx, const char* cmd,
   if (!options->inherit_stdio) {
     err = socketpair(AF_UNIX, SOCK_STREAM, 0, pair);
     if (err != 0)
-      duk_fatal(ctx, "socketpair() failure");
+      dukgyp_fatal_errno(ctx, "socketpair() failure");
   }
 
   pid = fork();
   if (pid == -1)
-    duk_fatal(ctx, "fork() failure");
+    dukgyp_fatal_errno(ctx, "fork() failure");
 
   /* Child process */
   if (pid == 0) {
@@ -126,6 +133,9 @@ static char* dukgyp_exec_cmd(duk_context* ctx, const char* cmd,
       do
         fd = open("/dev/null", O_RDWR);
       while (fd == -1 && errno == EINTR);
+
+      if (fd == -1)
+        abort();
 
       do
         err = dup2(fd, 0);
@@ -195,7 +205,7 @@ static duk_ret_t dukgyp_native_cwd(duk_context* ctx) {
 
   cwd = getwd(NULL);
   if (cwd == NULL)
-    duk_fatal(ctx, "cwd() failure");
+    dukgyp_fatal_errno(ctx, "cwd() failure");
   duk_push_string(ctx, cwd);
   free(cwd);
   return 1;
@@ -216,7 +226,7 @@ static void dukgyp_bindings_general(duk_context* ctx) {
   duk_put_prop_string(ctx, -2, "cwd");
 
   /* TODO(indutny): replace this with define */
-  duk_push_string(ctx, "darwin");
+  duk_push_string(ctx, DUKGYP_PLATFORM);
   duk_put_prop_string(ctx, -2, "platform");
 }
 
@@ -250,7 +260,7 @@ static duk_ret_t dukgyp_native_fs_exists(duk_context* ctx) {
   while (err == -1 && errno == EINTR);
 
   if (err == -1 && errno != ENOENT)
-    duk_fatal(ctx, "fs.exists failure");
+    dukgyp_fatal_errno(ctx, "fs.exists failure");
 
   duk_push_boolean(ctx, err == 0);
   return 1;
@@ -275,14 +285,14 @@ static duk_ret_t dukgyp_native_fs_read_file(duk_context* ctx) {
   if (fd == -1 && errno == ENOENT)
     duk_fatal(ctx, "fs.readFile() error: no file");
   else if (fd == -1)
-    duk_fatal(ctx, "fs.readFile() error: other failure");
+    dukgyp_fatal_errno(ctx, "fs.readFile() error: other failure");
 
   do
     err = fstat(fd, &st);
   while (err == -1 && errno == EINTR);
 
   if (err != 0)
-    duk_fatal(ctx, "fs.readFile() error: fstat error");
+    dukgyp_fatal_errno(ctx, "fs.readFile() error: fstat error");
 
   buf = dukgyp_read_fd(fd, st.st_size + 1, &len);
 
@@ -313,8 +323,11 @@ static duk_ret_t dukgyp_native_fs_write_file(duk_context* ctx) {
   content = duk_to_string(ctx, 1);
 
   do
-    fd = open(arg, O_WRONLY | O_CREAT | O_TRUNC);
+    fd = open(arg, O_WRONLY | O_CREAT | O_TRUNC, 0755);
   while (fd == -1 && errno == EINTR);
+
+  if (fd == -1)
+    dukgyp_fatal_errno(ctx, "open() failed");
 
   len = strlen(content);
   while (len != 0) {
@@ -325,7 +338,7 @@ static duk_ret_t dukgyp_native_fs_write_file(duk_context* ctx) {
     while (err == -1 && errno == EINTR);
 
     if (err == -1)
-      duk_fatal(ctx, "write() failed");
+      dukgyp_fatal_errno(ctx, "write() failed");
 
     content += err;
     len -= err;
@@ -356,13 +369,13 @@ static duk_ret_t dukgyp_native_fs_mkdirp(duk_context* ctx) {
     *p = '\0';
     err = dukgyp_mkdir(arg);
     if (err != 0 && errno != EEXIST)
-      duk_fatal(ctx, "mkdir() failure");
+      dukgyp_fatal_errno(ctx, "mkdir() failure");
     *p = '/';
   }
 
   err = dukgyp_mkdir(arg);
   if (err != 0 && errno != EEXIST)
-    duk_fatal(ctx, "mkdir() failure");
+    dukgyp_fatal_errno(ctx, "mkdir() failure");
   free(arg);
 
   return 0;
