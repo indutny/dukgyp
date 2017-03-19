@@ -29,6 +29,9 @@
       "deps/duktape/duktape.c",
       "src/dukgyp.c",
     ],
+    "libraries": [
+      "-lm",
+    ],
   },
   "targets": [{
     "target_name": "dukgyp",
