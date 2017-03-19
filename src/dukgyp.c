@@ -164,6 +164,14 @@ static char* dukgyp_exec_cmd(duk_context* ctx, const char* cmd,
       dukgyp_close_fd(fd);
     }
 
+    if (options->cwd != NULL) {
+      do
+        err = chdir(options->cwd);
+      while (err == -1 && errno == EINTR);
+      if (err == -1)
+        abort();
+    }
+
     if (err == -1)
       abort();
 
@@ -445,12 +453,13 @@ static duk_ret_t dukgyp_native_cp_exec(duk_context* ctx) {
   size_t len;
 
   cmd = duk_to_string(ctx, 0);
-  memset(&opts, sizeof(opts), 0);
+  memset(&opts, 0, sizeof(opts));
   if (duk_is_object(ctx, 1)) {
     const char* stdio;
 
     duk_get_prop_string(ctx, 1, "cwd");
-    opts.cwd = duk_to_string(ctx, -1);
+    if (duk_is_string(ctx, -1))
+      opts.cwd = duk_to_string(ctx, -1);
     duk_pop(ctx);
 
     duk_get_prop_string(ctx, 1, "stdio");

@@ -1,7 +1,7 @@
 'use strict';
 
 let tap = {
-  total: 15,
+  total: 16,
   current: 0,
   errors: 0
 };
@@ -108,6 +108,8 @@ assert.equal(execSync('echo hello').toString(), 'hello\n',
 assert.throws(() => {
   execSync('exit 1');
 }, 'execSync() must throw on non-zero exit code');
+assert(/dukgyp-test/.test(execSync('pwd', { cwd: '/tmp/dukgyp-test' })),
+       'execSync must respect `cwd` option');
 
 //
 // TAP end
