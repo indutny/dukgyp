@@ -112,6 +112,8 @@ static char* dukgyp_exec_cmd(duk_context* ctx, const char* cmd,
   int pair[2];
   char* buf;
 
+  /* TODO(indutny): throw on non-zero exit code */
+
   /* TODO(indutny): CLOEXEC */
   if (!options->inherit_stdio) {
     err = socketpair(AF_UNIX, SOCK_STREAM, 0, pair);

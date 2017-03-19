@@ -1,7 +1,7 @@
 'use strict';
 
 let tap = {
-  total: 13,
+  total: 14,
   current: 0,
   errors: 0
 };
@@ -97,6 +97,14 @@ assert.doesNotThrow(() => {
 }, 'fs.writeFileSync() should not throw');
 assert.equal(fs.readFileSync('/tmp/dukgyp-test/sub/b/file').toString(), 'hello',
              'fs.readFileSync() should return data');
+
+//
+// Child Process
+//
+const execSync = bindings.childProcess.execSync;
+
+assert.equal(execSync('echo hello').toString(), 'hello\n',
+             'execSync() must return stdout');
 
 //
 // TAP end
