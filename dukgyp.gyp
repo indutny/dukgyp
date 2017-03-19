@@ -1,6 +1,6 @@
 {
   "variables": {
-    "dukgyp_platform%": "unknown",
+    "dukgyp_platform%": "<(OS)",
   },
   "target_defaults": {
     "include_dirs": [
@@ -10,6 +10,11 @@
       ["OS=='mac'", {
         "variables": {
           "dukgyp_platform": "darwin",
+        },
+      }],
+      ["OS=='solaris'", {
+        "variables": {
+          "dukgyp_platform": "sunos",
         },
       }],
     ],
