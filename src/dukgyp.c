@@ -238,12 +238,13 @@ static duk_ret_t dukgyp_native_exit(duk_context* ctx) {
 
 static duk_ret_t dukgyp_native_cwd(duk_context* ctx) {
   char* cwd;
+  /* TODO(indutny): PATH_MAX */
+  char buf[16384];
 
-  cwd = getwd(NULL);
+  cwd = getcwd(buf, sizeof(buf));
   if (cwd == NULL)
     dukgyp_syscall_throw(ctx, "cwd() failure");
   duk_push_string(ctx, cwd);
-  free(cwd);
   return 1;
 }
 
