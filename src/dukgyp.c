@@ -252,6 +252,9 @@ static duk_ret_t dukgyp_native_fs_realpath(duk_context* ctx) {
   char* p;
 
   p = realpath(duk_to_string(ctx, 0), NULL);
+  if (p == NULL)
+    dukgyp_syscall_throw(ctx, "realpath() failure");
+
   duk_push_string(ctx, p);
   free(p);
   return 1;
