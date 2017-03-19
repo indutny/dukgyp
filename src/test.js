@@ -1,7 +1,7 @@
 'use strict';
 
 let tap = {
-  total: 8,
+  total: 13,
   current: 0,
   errors: 0
 };
@@ -22,7 +22,7 @@ assert.equal = (a, b, msg) => {
     bindings.log(`ok ${id} ${msg}\n`);
   } else {
     bindings.log(`not ok ${id} ${msg}\n`);
-    const out = msg || `Expected "${a}" to be equal to "${b}"`;
+    const out = `Expected "${a}" to be equal to "${b}"`;
     bindings.error(out + '\n');
     tap.errors++;
   }
@@ -39,6 +39,21 @@ assert.throws = (fn, msg) => {
 
   bindings.log(`not ok ${id} ${msg}\n`);
   tap.errors++;
+};
+
+
+assert.doesNotThrow = (fn, msg) => {
+  const id = ++tap.current;
+  try {
+    fn();
+  } catch (e) {
+    bindings.log(`not ok ${id} ${msg}\n`);
+    bindings.error(e.stack + '\n');
+    tap.errors++;
+    return;
+  }
+
+  bindings.log(`ok ${id} ${msg}\n`);
 };
 
 //
@@ -69,11 +84,25 @@ assert.throws(() => {
 assert(/dukgyp-test/.test(fs.realpathSync(bindings.argv[1])),
        'fs.realpathSync() should return meaningful data');
 
+assert(fs.existsSync(fs.realpathSync(bindings.argv[1])),
+       'fs.existsSync() must return true');
+assert(!fs.existsSync('random-stuff-that-does-not-exist'),
+       'fs.existsSync() must return false');
+
+assert.doesNotThrow(() => {
+  fs.mkdirpSync('/tmp/dukgyp-test/sub/b');
+}, 'fs.mkdirpSync() should not throw');
+assert.doesNotThrow(() => {
+  fs.writeFileSync('/tmp/dukgyp-test/sub/b/file', 'hello');
+}, 'fs.writeFileSync() should not throw');
+assert.equal(fs.readFileSync('/tmp/dukgyp-test/sub/b/file').toString(), 'hello',
+             'fs.readFileSync() should return data');
+
 //
 // TAP end
 //
 if (tap.current !== tap.total)
-  throw new Error('TAP PROBLEM, change `tap.total` in test.js');
+  throw new Error('TAP PROBLEM, update `tap.total` in test.js');
 
 bindings.exit(tap.errors === 0 ? 0 : -1);
 throw new Error('Unreachable');
