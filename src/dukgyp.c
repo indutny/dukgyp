@@ -418,9 +418,9 @@ static duk_ret_t dukgyp_native_fs_mkdirp(duk_context* ctx) {
   }
 
   err = dukgyp_mkdir(arg);
+  free(arg);
   if (err != 0 && errno != EEXIST)
     dukgyp_syscall_throw(ctx, "mkdir() failure");
-  free(arg);
 
   return 0;
 }
@@ -499,9 +499,25 @@ static void dukgyp_bindings_child_process(duk_context* ctx) {
 }
 
 
+static duk_ret_t dukgyp_native_getenv(duk_context* ctx) {
+  const char* arg;
+  char* env;
+
+  arg = duk_to_string(ctx, 0);
+
+  env = getenv(arg);
+  if (env == NULL)
+    duk_push_undefined(ctx);
+  else
+    duk_push_string(ctx, env);
+
+  return 1;
+}
+
+
 static void dukgyp_bindings_env(duk_context* ctx) {
-  duk_push_object(ctx);
-  duk_put_prop_string(ctx, -2, "env");
+  duk_push_c_function(ctx, dukgyp_native_getenv, 1);
+  duk_put_prop_string(ctx, -2, "getenv");
 }
 
 

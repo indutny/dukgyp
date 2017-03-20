@@ -1,6 +1,8 @@
 'use strict';
 
 require('babel-polyfill');
+require('./common.js');
+
 const gyp = require('gyp.js');
 
 try {

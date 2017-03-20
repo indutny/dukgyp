@@ -102,6 +102,7 @@
     "actions": [{
       'action_name': 'webpack',
       'inputs': [
+        'src/common.js',
         'src/dukgyp.js',
         'src/test.js',
       ],

@@ -1,7 +1,7 @@
 'use strict';
 
 let tap = {
-  total: 16,
+  total: 18,
   current: 0,
   errors: 0
 };
@@ -56,11 +56,13 @@ assert.doesNotThrow = (fn, msg) => {
   bindings.log(`ok ${id} ${msg}\n`);
 };
 
+bindings.log(`1..${tap.total}\n`);
+
 //
 // General bindings
 //
 
-bindings.log(`1..${tap.total}\n`);
+require('./common.js');
 
 assert.equal(typeof bindings.platform, 'string',
              'Platform must be present');
@@ -110,6 +112,13 @@ assert.throws(() => {
 }, 'execSync() must throw on non-zero exit code');
 assert(/dukgyp-test/.test(execSync('pwd', { cwd: '/tmp/dukgyp-test' })),
        'execSync must respect `cwd` option');
+
+//
+// Env
+//
+assert(bindings.env.PATH.length !== 0, 'binding.env.PATH should not be empty');
+assert.equal(bindings.env.OHAI_RND_PATH, undefined,
+             'bindings.env.rnd should be undefined');
 
 //
 // TAP end
