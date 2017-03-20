@@ -250,6 +250,8 @@ static duk_ret_t dukgyp_native_cwd(duk_context* ctx) {
 
 
 static void dukgyp_bindings_general(duk_context* ctx) {
+  char* platform;
+
   duk_push_c_function(ctx, dukgyp_native_log, 1);
   duk_put_prop_string(ctx, -2, "log");
 
@@ -262,8 +264,10 @@ static void dukgyp_bindings_general(duk_context* ctx) {
   duk_push_c_function(ctx, dukgyp_native_cwd, 0);
   duk_put_prop_string(ctx, -2, "cwd");
 
-  /* TODO(indutny): replace this with define */
-  duk_push_string(ctx, DUKGYP_PLATFORM);
+  platform = getenv("DUKGYP_PLATFORM");
+  if (platform == NULL)
+    platform = DUKGYP_PLATFORM;
+  duk_push_string(ctx, platform);
   duk_put_prop_string(ctx, -2, "platform");
 }
 
