@@ -1,6 +1,16 @@
 {
   "name": "dukgyp",
   "version": "1.0.0",
+  "bin": {
+    "dukgyp": "./bin/dukgyp"
+  },
+  "files": [
+    "deps",
+    "src",
+    "tools",
+    "dukgyp.gyp",
+    "webpack.config.js",
+  ],
   "description": "gyp.js on duktape",
   "main": "src/dukgyp.js",
   "binding": false,
