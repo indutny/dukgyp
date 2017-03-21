@@ -1,4 +1,6 @@
 # dukgyp
+[![Build Status](https://secure.travis-ci.org/indutny/dukgyp.svg)](http://travis-ci.org/indutny/dukgyp)
+[![NPM version](https://badge.fury.io/js/dukgyp.svg)](https://badge.fury.io/js/dukgyp)
 
 [gyp.js][1] on a [duktape][2].
 
