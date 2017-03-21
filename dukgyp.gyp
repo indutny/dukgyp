@@ -1,6 +1,7 @@
 {
   "variables": {
     "dukgyp_platform%": "<(OS)",
+    "dukgyp_arch%": "<(target_arch)",
   },
   "target_defaults": {
     "include_dirs": [
@@ -20,6 +21,7 @@
     ],
     "defines": [
       "DUKGYP_PLATFORM=\"<(dukgyp_platform)\"",
+      "DUKGYP_ARCH=\"<(dukgyp_arch)\"",
     ],
     "include_dirs": [
       "deps/duktape",

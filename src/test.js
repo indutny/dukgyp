@@ -1,7 +1,7 @@
 'use strict';
 
 let tap = {
-  total: 18,
+  total: 20,
   current: 0,
   errors: 0
 };
@@ -69,6 +69,11 @@ assert.equal(typeof bindings.platform, 'string',
 assert([
   'darwin', 'solaris', 'win32', 'linux', 'freebsd'
 ].indexOf(bindings.platform) !== -1, 'Platform must be known');
+assert.equal(typeof bindings.arch, 'string',
+             'Arch must be present');
+assert([
+  'x64', 'ia32', 'arm'
+].indexOf(bindings.arch) !== -1, 'Arch must be known');
 assert.equal(typeof bindings.cwd(), 'string', 'cwd() must return string');
 assert.equal(bindings.argv[0], 'duktape', 'argv[0] must be `duktape`');
 assert(/dukgyp-test/.test(bindings.argv[1]), 'argv[1] must be proper');

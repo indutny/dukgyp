@@ -251,6 +251,7 @@ static duk_ret_t dukgyp_native_cwd(duk_context* ctx) {
 
 static void dukgyp_bindings_general(duk_context* ctx) {
   char* platform;
+  char* arch;
 
   duk_push_c_function(ctx, dukgyp_native_log, 1);
   duk_put_prop_string(ctx, -2, "log");
@@ -269,6 +270,12 @@ static void dukgyp_bindings_general(duk_context* ctx) {
     platform = DUKGYP_PLATFORM;
   duk_push_string(ctx, platform);
   duk_put_prop_string(ctx, -2, "platform");
+
+  arch = getenv("DUKGYP_ARCH");
+  if (arch == NULL)
+    arch = DUKGYP_ARCH;
+  duk_push_string(ctx, arch);
+  duk_put_prop_string(ctx, -2, "arch");
 }
 
 
