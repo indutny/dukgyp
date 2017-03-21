@@ -18,6 +18,7 @@ not going to be a dependency in [very near future][4]. As it is right now, the
 best way to build it is to run:
 
 ```sh
+npm install
 npm run build
 ```
 
