@@ -13,16 +13,15 @@ polyfill `fs` and `child_process` APIs and using `duktape` as a JS runtime.
 
 ## Build Instructions
 
-Funny enough, but right now this project can be built only using `node`. This is
-not going to be a dependency in [very near future][4]. As it is right now, the
-best way to build it is to run:
+This project can be built on system without node.js, but to get the source file
+one need to build it somewhere else where node.js is available:
 
 ```sh
 npm install
 npm run build
 ```
 
-It can be tested with:
+dukgyp can be tested with:
 ```sh
 npm test
 ```
@@ -31,6 +30,14 @@ The result of the build is copied to `bin` folder:
 ```sh
 ./bin/dukgyp
 ```
+
+The single-source file is placed in:
+```sh
+./out/Release/dukgyp-bundle.c
+```
+
+Source file may be compiled with any compiler without any flags or defines.
+Simple!
 
 ## How to contribute?
 

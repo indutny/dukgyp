@@ -67,34 +67,34 @@
       "dukgyp_webpack",
     ],
     "actions": [{
-      'action_name': 'source2blob',
-      'inputs': [
-        'lib/dukgyp.js',
+      "action_name": "source2blob",
+      "inputs": [
+        "lib/dukgyp.js",
       ],
-      'outputs': [
-        '<(SHARED_INTERMEDIATE_DIR)/src/dukgyp-js.h'
+      "outputs": [
+        "<(SHARED_INTERMEDIATE_DIR)/src/dukgyp-js.h",
       ],
-      'action': [
-        'node',
-        'tools/source2blob.js',
-        'dukgyp-js',
-        '<@(_inputs)',
-        '<@(_outputs)',
+      "action": [
+        "node",
+        "tools/source2blob.js",
+        "dukgyp-js",
+        "<@(_inputs)",
+        "<@(_outputs)",
       ],
     }, {
-      'action_name': 'source2blob',
-      'inputs': [
-        'lib/test.js',
+      "action_name": "source2blob",
+      "inputs": [
+        "lib/test.js",
       ],
-      'outputs': [
-        '<(SHARED_INTERMEDIATE_DIR)/src/dukgyp-test-js.h'
+      "outputs": [
+        "<(SHARED_INTERMEDIATE_DIR)/src/dukgyp-test-js.h",
       ],
-      'action': [
-        'node',
-        'tools/source2blob.js',
-        'dukgyp-js',
-        '<@(_inputs)',
-        '<@(_outputs)',
+      "action": [
+        "node",
+        "tools/source2blob.js",
+        "dukgyp-js",
+        "<@(_inputs)",
+        "<@(_outputs)",
       ],
     }],
   }, {
@@ -102,18 +102,45 @@
     "type": "none",
 
     "actions": [{
-      'action_name': 'webpack',
-      'inputs': [
-        'src/common.js',
-        'src/dukgyp.js',
-        'src/test.js',
+      "action_name": "webpack",
+      "inputs": [
+        "src/common.js",
+        "src/dukgyp.js",
+        "src/test.js",
       ],
-      'outputs': [
-        'lib/dukgyp.js',
-        'lib/test.js',
+      "outputs": [
+        "lib/dukgyp.js",
+        "lib/test.js",
       ],
-      'action': [
+      "action": [
         "./node_modules/.bin/webpack",
+      ],
+    }],
+  }, {
+    "target_name": "dukgyp_bundle",
+    "type": "none",
+    "dependencies": [
+      "dukgyp_webpack",
+      "dukgyp_js",
+    ],
+    "actions": [{
+      "action_name": "bundle",
+      "inputs": [
+        "deps/duktape/duk_config.h",
+        "deps/duktape/duktape.h",
+        "deps/duktape/duktape.c",
+        "<(SHARED_INTERMEDIATE_DIR)/src/dukgyp-js.h",
+        "src/dukgyp.c",
+      ],
+      "outputs": [
+        "<(PRODUCT_DIR)/dukgyp-bundle.c",
+      ],
+      "action": [
+        "node",
+        "tools/bundle.js",
+        "--output",
+        "<@(_outputs)",
+        "<@(_inputs)",
       ],
     }],
   }],

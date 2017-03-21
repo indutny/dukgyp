@@ -267,13 +267,21 @@ static void dukgyp_bindings_general(duk_context* ctx) {
 
   platform = getenv("DUKGYP_PLATFORM");
   if (platform == NULL)
+#ifdef DUKGYP_PLATFORM
     platform = DUKGYP_PLATFORM;
+#else
+    duk_generic_error(ctx, "Please provide DUKGYP_PLATFORM env variable");
+#endif  /* DUKGYP_PLATFORM */
   duk_push_string(ctx, platform);
   duk_put_prop_string(ctx, -2, "platform");
 
   arch = getenv("DUKGYP_ARCH");
   if (arch == NULL)
+#ifdef DUKGYP_ARCH
     arch = DUKGYP_ARCH;
+#else
+  duk_generic_error(ctx, "Please provide DUKGYP_ARCH env variable");
+#endif  /* DUKGYP_PLATFORM */
   duk_push_string(ctx, arch);
   duk_put_prop_string(ctx, -2, "arch");
 }
