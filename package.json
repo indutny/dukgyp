@@ -9,7 +9,7 @@
     "deps",
     "src",
     "tools",
-    "dukgyp.gyp",
+    "dukgyp.gyp.json",
     "webpack.config.js"
   ],
   "description": "gyp.js on duktape",
@@ -17,7 +17,7 @@
   "binding": false,
   "scripts": {
     "test": "npm run build && ./out/Release/dukgyp-test",
-    "build": "gypkg build dukgyp.gyp",
+    "build": "gypkg build dukgyp.gyp.json",
     "install": "npm run build"
   },
   "repository": {
