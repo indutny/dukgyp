@@ -9,7 +9,7 @@
     "src",
     "tools",
     "dukgyp.gyp",
-    "webpack.config.js",
+    "webpack.config.js"
   ],
   "description": "gyp.js on duktape",
   "main": "src/dukgyp.js",
