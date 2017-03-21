@@ -1,7 +1,7 @@
 'use strict';
 
 let tap = {
-  total: 20,
+  total: 21,
   current: 0,
   errors: 0
 };
@@ -110,6 +110,8 @@ assert.equal(fs.readFileSync('/tmp/dukgyp-test/sub/b/file').toString(), 'hello',
 //
 const execSync = bindings.childProcess.execSync;
 
+assert.equal(execSync('echo hello').constructor.name, 'Buffer',
+       'execSync() must return Buffer');
 assert.equal(execSync('echo hello').toString(), 'hello\n',
              'execSync() must return stdout');
 assert.throws(() => {

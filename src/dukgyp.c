@@ -463,6 +463,7 @@ static duk_ret_t dukgyp_native_cp_exec(duk_context* ctx) {
   dukgyp_exec_opt_t opts;
   char* out;
   size_t len;
+  char* storage;
 
   cmd = duk_to_string(ctx, 0);
   memset(&opts, 0, sizeof(opts));
@@ -490,8 +491,13 @@ static duk_ret_t dukgyp_native_cp_exec(duk_context* ctx) {
     return 1;
   }
 
-  duk_push_string(ctx, out);
+  storage = duk_push_fixed_buffer(ctx, len);
+  memcpy(storage, out, len);
   free(out);
+
+  duk_push_buffer_object(ctx, -1, 0, len, DUK_BUFOBJ_NODEJS_BUFFER);
+  duk_remove(ctx, -2);
+
   return 1;
 }
 
