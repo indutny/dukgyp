@@ -5,6 +5,7 @@
     "dukgyp": "./bin/dukgyp"
   },
   "files": [
+    "bin",
     "deps",
     "src",
     "tools",
