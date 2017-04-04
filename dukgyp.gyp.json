@@ -31,8 +31,18 @@
       "deps/duktape/duktape.c",
       "src/dukgyp.c",
     ],
-    "libraries": [
-      "-lm",
+    "conditions": [
+      [
+        "OS != 'win'",
+        {
+          "libraries": [
+            "-lm",
+          ],
+        }, {
+          "libraries": [
+          ]
+        }
+      ]
     ],
   },
   "targets": [{
@@ -57,7 +67,16 @@
     "copies": [
       {
         "destination": "./bin/",
-        "files": ["./out/Release/dukgyp"]
+        "conditions": [
+          [
+            "OS=='win'",
+            {
+              "files": ["<(PRODUCT_DIR)/dukgyp.exe"]
+            }, {
+              "files": ["<(PRODUCT_DIR)/dukgyp"]
+            }
+          ]
+        ]
       },
     ],
   }, {

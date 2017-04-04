@@ -1,0 +1,33 @@
+environment:
+  nodejs_version: "7"
+
+image:
+  - Visual Studio 2017
+  - Visual Studio 2015
+
+platform:
+  - x64
+  - x86
+
+configuration:
+  - Release
+
+matrix:
+  fast_finish: false
+
+install:
+  - ps: Install-Product node $env:nodejs_version
+  - cmd: npm i -q --ignore-scripts
+
+build_script:
+  - cmd: npm run build
+
+test_script:
+  - cmd: out\Release\dukgyp-test.exe
+
+artifacts:
+  - name: The Duk
+    path: 'bin\dukgyp.exe'
+
+cache:
+  - node_modules
